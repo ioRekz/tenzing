@@ -74,13 +74,15 @@
           (om?      opts) (conj "om \"0.7.3\"" "cljsjs/react \"0.11.2\"")
           (reagent? opts) (conj "reagent \"0.4.3\"" "cljsjs/react \"0.12.1\"")
           (garden?  opts) (conj "boot-garden \"1.2.5-1\"")
-          (sass?    opts) (conj "boot-sassc  \"0.1.0\"")))
+          (sass?    opts) (conj "boot-sassc  \"0.1.0\"")
+          (or (om? opts) (reagent? opts)) (conj "cljsjs/boot-cljsjs \"0.2.3-SNAPSHOT\"")))
 
 (defn build-requires [opts]
   (cond-> []
           (garden? opts) (conj "'[boot-garden.core :refer [garden]]")
           (sass?   opts) (conj "'[boot-sassc.core  :refer [sass]]")
-          (less?   opts) (conj "'[deraen.boot-less :refer [less]]")))
+          (less?   opts) (conj "'[deraen.boot-less :refer [less]]")
+          (or (om? opts) (reagent? opts)) (conj "'[cljsjs.app :refer [js-import]]") ))
 
 (defn build-steps [name opts]
   (cond-> []
@@ -111,9 +113,10 @@
 
 (defn index-html-script-tags [opts]
   (letfn [(script-tag [src] (str "<script type=\"text/javascript\" src=\"" src "\"></script>"))]
-    (cond-> [(script-tag "js/app.js")]
+    (conj (cond-> []
             (or (om? opts) (reagent? opts))
-            (conj (script-tag "js/preamble.js")))))
+            (conj (script-tag "js/preamble.js")))
+          (script-tag "js/app.js"))))
 
 (defn template-data [name opts]
   {:name name
