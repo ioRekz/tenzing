@@ -1,9 +1,9 @@
 (set-env!
- :src-paths    {{{source-paths}}}
- :rsc-paths    #{"resources"}
- :dependencies '[[adzerk/boot-cljs      "0.0-2411-3" :scope "test"]
-                 [adzerk/boot-cljs-repl "0.1.7"       :scope "test"]
-                 [adzerk/boot-reload    "0.2.0"       :scope "test"]{{{deps}}}])
+ :source-paths    {{{source-paths}}}
+ :resource-paths  #{"resources"}
+ :dependencies '[[adzerk/boot-cljs      "0.0-2411-5" :scope "test"]
+                 [adzerk/boot-cljs-repl "0.1.7"      :scope "test"]
+                 [adzerk/boot-reload    "0.2.0"      :scope "test"]{{{deps}}}])
 
 (require
  '[adzerk.boot-cljs      :refer [cljs]]
@@ -14,7 +14,7 @@
 (deftask run
   ""
   []
-  (comp ;(serve :dir "target/public")
+  (comp (serve :dir "target/public")
         (watch)
         (speak)
         (cljs-repl)
