@@ -57,32 +57,39 @@
 (defn sass? [opts]
   (some #{"+sass"} opts))
 
+(defn less? [opts]
+  (some #{"+less"} opts))
+
 (defn garden? [opts]
   (some #{"+garden"} opts))
 
 (defn source-paths [opts]
   (cond-> #{"src/cljs"}
           (garden? opts) (conj "src/clj")
-          (sass? opts)   (conj "sass")))
+          (sass? opts)   (conj "sass")
+          (less? opts)   (conj "less")))
 
 (defn dependencies [opts]
   (cond-> ["pandeiro/boot-http \"0.3.0\""]
           (om?      opts) (conj "om \"0.7.3\"")
           (reagent? opts) (conj "reagent \"0.4.3\"")
           (garden?  opts) (conj "boot-garden \"1.2.5-1\"")
-          (sass?    opts) (conj "boot-sassc  \"0.1.0\"")
+          (sass?    opts) (conj "boot-sassc \"0.1.0\"")
+          (less?    opts) (conj "deraen/boot-less \"0.1.0-SNAPSHOT\"")
           (or (reagent? opts)
-              (om?      opts)) (conj "cljsjs/react \"0.11.2\"")))
+              (om?      opts)) (conj "com.facebook/react \"0.11.2\"")))
 
 (defn build-requires [opts]
   (cond-> []
           (garden? opts) (conj "'[boot-garden.core :refer [garden]]")
-          (sass?   opts) (conj "'[boot-sassc.core  :refer [sass]]") ))
+          (sass?   opts) (conj "'[boot-sassc.core  :refer [sass]]")
+          (less?   opts) (conj "'[deraen.boot-less :refer [less]]")))
 
 (defn build-steps [name opts]
   (cond-> []
           (garden? opts) (conj (str "(garden :styles-var '" name ".styles/screen\n:output-to \"public/css/garden.css\")"))
-          (sass?   opts) (conj (str "(sass :output-to \"public/css/sass.css\")"))))
+          (sass?   opts) (conj (str "(sass :output-to \"public/css/sass.css\")"))
+          (less?   opts) (conj (str "(less)"))))
 
 (defn production-task-opts [opts]
   (cond-> []
@@ -98,7 +105,8 @@
   (let [style-tag #(str "<link href=\"" % "\" rel=\"stylesheet\" type=\"text/css\" media=\"screen\">")]
     (cond-> []
             (garden? opts) (conj (style-tag "css/garden.css"))
-            (sass?   opts) (conj (style-tag "css/sass.css")))))
+            (sass?   opts) (conj (style-tag "css/sass.css"))
+            (less?   opts) (conj (style-tag "css/styles.css")))))
 
 (defn template-data [name opts]
   {:name name
@@ -129,6 +137,7 @@
                    (vector (if (divshot? opts) ["divshot.json" (render "divshot.json" data)])
                            (if (garden? opts)  ["src/clj/{{sanitized}}/styles.clj" (render "styles.clj" data)])
                            (if (sass? opts)    ["sass/styles.sass" (render "styles.sass" data)])
+                           (if (less? opts)    ["less/styles.less" (render "styles.less" data)])
                            (if (reagent? opts) [app-cljs (render "reagent-app.cljs" data)])
                            (if (om? opts)      [app-cljs (render "om-app.cljs" data)])
 
