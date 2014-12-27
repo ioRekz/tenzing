@@ -145,5 +145,6 @@
                            (if (reagent? opts) [app-cljs (render "reagent-app.cljs" data)])
                            (if (om? opts)      [app-cljs (render "om-app.cljs" data)])
 
+                           ["src/app.main.edn" (render "app.main.edn" data)]
                            ["resources/index.html" (render "index.html" data)]
                            ["build.boot" (render "build.boot" data)])))))
