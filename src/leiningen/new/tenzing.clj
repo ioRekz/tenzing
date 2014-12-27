@@ -149,6 +149,7 @@
                            (if (om? opts)      [app-cljs (render "om-app.cljs" data)])
                            (if (not (cljs-lib? opts)) [app-cljs (render "app.cljs" data)])
 
+                           ["src/cljs/main.cljs" (render "main.cljs" data)]
                            ["src/app.main.edn" (render "app.main.edn" data)]
                            ["resources/index.html" (render "index.html" data)]
                            ["build.boot" (render "build.boot" data)])))))
