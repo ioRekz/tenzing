@@ -44,6 +44,9 @@
 (defn indent [n list]
   (wrap-indent identity n list))
 
+; ---------------------------------------------------------------
+; Options - currently: divshot, reagent, om, sass, garden
+; ---------------------------------------------------------------
 
 (defn divshot? [opts]
   (some #{"+divshot"} opts))
@@ -63,8 +66,9 @@
 (defn garden? [opts]
   (some #{"+garden"} opts))
 
-(defn cljs-lib? [opts]
-  (or (om? opts) (reagent? opts)))
+;; ---------------------------------------------------------------
+;; Template data helpers
+;; ---------------------------------------------------------------
 
 (defn source-paths [opts]
   (cond-> #{"src/cljs"}
@@ -73,12 +77,11 @@
           (less? opts)   (conj "less")))
 
 (defn dependencies [opts]
-  (cond-> ["pandeiro/boot-http \"0.3.0\""]
-          (om?      opts) (conj "om \"0.7.3\"" "cljsjs/react \"0.11.2\"")
-          (reagent? opts) (conj "reagent \"0.4.3\"" "cljsjs/react \"0.12.2-1\"")
+  (cond-> []
+          (om?      opts) (conj "org.omcljs/om \"0.8.6\"")
+          (reagent? opts) (conj "reagent \"0.5.0-SNAPSHOT\"")
           (garden?  opts) (conj "boot-garden \"1.2.5-1\"")
-          (sass?    opts) (conj "boot-sassc  \"0.1.0\"")
-          (or (om? opts) (reagent? opts)) (conj "cljsjs/boot-cljsjs \"0.3.0\"")))
+          (sass?    opts) (conj "boot-sassc  \"0.1.0\"")))
 
 (defn build-requires [opts]
   (cond-> []
@@ -87,13 +90,16 @@
           (less?   opts) (conj "'[deraen.boot-less :refer [less]]")
           (or (om? opts) (reagent? opts)) (conj "'[cljsjs.app :refer [from-cljsjs]]") ))
 
+;; (defn pre-build-steps [name opts]
+;;   (cond-> []
+;;           ))
+
 (defn build-steps [name opts]
   (cond-> []
           (garden? opts) (conj (str "(garden :styles-var '" name ".styles/screen\n:output-to \"css/garden.css\")"))
           (sass?   opts) (conj (str "(sass :output-to \"css/sass.css\")"))
           (less?   opts) (conj (str "(less)"))
-          (or (om? opts)
-              (reagent? opts)) (conj (str "(from-cljsjs)"))))
+          (or (om? opts) (reagent? opts)) (conj (str "(from-cljsjs)"))))
 
 (defn production-task-opts [opts]
   (cond-> []
@@ -108,40 +114,38 @@
 (defn index-html-head-tags [opts]
   (letfn [(style-tag [href] (str "<link href=\"" href "\" rel=\"stylesheet\" type=\"text/css\" media=\"screen\">"))]
     (cond-> []
-            (less?   opts) (conj (style-tag "css/styles.css")))))
-            (garden? opts)
-            (conj (style-tag "css/garden.css"))
-            (sass? opts)
-            (conj (style-tag "css/sass.css")))))
+            (less?   opts) (conj (style-tag "css/styles.css"))
+            (garden? opts) (conj (style-tag "css/garden.css"))
+            (sass? opts)   (conj (style-tag "css/sass.css")))))
 
 (defn index-html-script-tags [opts]
   (letfn [(script-tag [src] (str "<script type=\"text/javascript\" src=\"" src "\"></script>"))]
     (cond-> []
-            false ;(or (om? opts) (reagent? opts))
-            (conj (script-tag "js/preamble.js"))
-            :finally
-            (conj (script-tag "js/app.js")))))
+            :finally (conj (script-tag "js/app.js")))))
 
 (defn template-data [name opts]
-  {:name name
-   :sanitized (name-to-path name)
-   :source-paths (source-paths opts)
-   :deps (dep-list 18 (dependencies opts))
-   :requires (indent 1 (build-requires opts))
-   :build-steps (indent 8 (build-steps name opts))
-   :production-task-opts (indent 22 (production-task-opts opts))
-   :development-task-opts (indent 22 (development-task-opts opts))
+  {:name                   name
+   :sanitized              (name-to-path name)
+   :source-paths           (source-paths opts)
+   :deps                   (dep-list 17 (dependencies opts))
+   :requires               (indent 1 (build-requires opts))
+   ;; :pre-build-steps        (indent 8 (pre-build-steps name opts))
+   :build-steps            (indent 8 (build-steps name opts))
+   :production-task-opts   (indent 22 (production-task-opts opts))
+   :development-task-opts  (indent 22 (development-task-opts opts))
    :index-html-script-tags (indent 4 (index-html-script-tags opts))
-   :index-html-head-tags (indent 4 (index-html-head-tags opts))})
+   :index-html-head-tags   (indent 4 (index-html-head-tags opts))})
 
-(defn warn-on-exclusive-opts! [opts]
+(defn warn-on-exclusive-opts!
+  "Some options can't be used together w/o added complexity."
+  [opts]
   (when (and (om? opts)
              (reagent? opts))
     (main/warn "Please specify only +om or +reagent, not both.")
     (main/exit)))
 
 (defn tenzing
-  "FIXME: write documentation"
+  "Main function to generate new tenzing project."
   [name & opts]
   (let [data     (template-data name opts)
         app-cljs "src/cljs/{{sanitized}}/app.cljs"]
@@ -153,9 +157,11 @@
                            (if (garden? opts)  ["src/clj/{{sanitized}}/styles.clj" (render "styles.clj" data)])
                            (if (sass? opts)    ["sass/styles.sass" (render "styles.sass" data)])
                            (if (less? opts)    ["less/styles.less" (render "styles.less" data)])
-                           (if (reagent? opts) [app-cljs (render "reagent-app.cljs" data)])
-                           (if (om? opts)      [app-cljs (render "om-app.cljs" data)])
-                           (if (not (cljs-lib? opts)) [app-cljs (render "app.cljs" data)])
 
+                           (cond (reagent? opts) [app-cljs (render "reagent-app.cljs" data)]
+                                 (om? opts)      [app-cljs (render "om-app.cljs" data)]
+                                 :none           [app-cljs (render "app.cljs" data)])
+
+                           ["resources/js/app.cljs.edn" (render "app.cljs.edn" data)]
                            ["resources/index.html" (render "index.html" data)]
                            ["build.boot" (render "build.boot" data)])))))
