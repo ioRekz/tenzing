@@ -1,14 +1,14 @@
 # Tenzing
 
-### Tenzing is still work in progress and might not work at all. Watch the project to be notified when it's ready.
+**Tenzing is work in progress, please report issues as you encounter them!**
 
 Tenzing is a template for Clojurescript applications inspired by
 [Chestnut][chestnut]. Just like Chestnut it offers the following
 features:
 
-1. Easy Clojurescript compilation
-1. Browser-REPL
+1. Incremental Clojurescript compilation
 1. Live reloading of your Javascript, CSS, etc.
+1. Browser-REPL
 
 **There also are some differences:**
 
@@ -51,11 +51,20 @@ for building early iterations of your application.
 
 ## Usage
 
-    $ lein new tenzing your-app
+After you [installed Boot](https://github.com/boot-clj/boot#install):
+
+    $ lein new tenzing your-app # see `Options`
     $ cd your-app
-    $ boot development
+    $ boot dev
 
 After a moment of waiting you can head to [localhost:3000](http://localhost:3000) to see a small sample app.
+Please refer to the documentation of the actual tasks to get more information, how to connect to the REPL or change certain behaviour. (Or try `boot -h` or `boot taskname -h`)
+
+- [pandeiro/boot-http](https://github.com/pandeiro/boot-http)
+- [adzerk/boot-cljs](https://github.com/adzerk/boot-cljs)
+- [adzerk/boot-reload](https://github.com/adzerk/boot-reload)
+- [adzerk/boot-cljs-repl](https://github.com/adzerk/boot-cljs-repl)
+- [cljsjs/boot-cljsjs](https://github.com/cljsjs/boot-cljsjs)
 
 ### Options
 
